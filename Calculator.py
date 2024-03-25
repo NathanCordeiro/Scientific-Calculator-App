@@ -1,17 +1,31 @@
 import tkinter as tk
 import math
 
+class HoverButton(tk.Button):
+    def __init__(self, master=None, **kwargs):
+        tk.Button.__init__(self, master=master, **kwargs)
+        self.defaultBackground = "#00ccff"
+        self["bg"] = self.defaultBackground
+        self.bind("<Enter>", self.on_enter)
+        self.bind("<Leave>", self.on_leave)
+
+    def on_enter(self, event):
+        self.configure(bg="#ff4500")  # Change background color on hover
+
+    def on_leave(self, event):
+        self.configure(bg=self.defaultBackground)  # Restore original background color
+
 class ScientificCalculator(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Scientific Calculator")
-        self.geometry("400x600")
-        self.configure(bg="#ffffff")  # Set background color
+        self.geometry("300x550")
+        self.configure(bg="#6699FF")  # Set background color 
         self.create_widgets()
 
     def create_widgets(self):
         # Text widget to display input and output
-        self.display = tk.Text(self, height=2, font=("Arial", 20), fg="#000000" ,bg="#ffffcc", bd=2.5, relief=tk.SOLID) # set text colour and text background
+        self.display = tk.Text(self, height=2, font=("Arial", 20), fg="#6699FF" ,bg="#000000", bd=2.5, relief=tk.SOLID) # set text colour and text background
         self.display.pack(fill=tk.BOTH, expand=True)
 
         # Button frame
@@ -25,24 +39,40 @@ class ScientificCalculator(tk.Tk):
             ('1', 3, 0), ('2', 3, 1), ('3', 3, 2), ('-', 3, 3),
             ('0', 4, 0), ('.', 4, 1), ('=', 4, 2), ('+', 4, 3),
             ('sin', 5, 0), ('cos', 5, 1), ('tan', 5, 2), ('sqrt', 5, 3),
-            ('(', 6, 0), (')', 6, 1), ('^', 6, 2), ('C', 6, 3),
-            ('Del', 6, 4), ('%', 6, 5), ('bin', 7, 0), ('oct', 7, 1),
-            ('hex', 7, 2), ('dec', 7, 3)
+            ('(', 6, 0), (')', 6, 1), ('^', 6, 2), ('π', 6, 3),
+            ('bin', 7, 0), ('oct', 7, 1),('hex', 7, 2), ('dec', 7, 3), 
+            ('C', 8, 0),('Del', 8, 1), ('%', 8, 2)
         ]
 
         # Create buttons
         for text, row, col in buttons:
-            button = tk.Button(button_frame, text=text, font=("Arial", 15),
+            button = HoverButton(button_frame, text=text, font=("Arial", 15),
                                command=lambda t=text: self.on_button_click(t))
-            button.grid(row=row, column=col, padx=5, pady=5, sticky="nsew")
+            button.grid(row=row, column=col, padx=8, pady=6, sticky="nsew")
 
             # Set button colors
             if text in ('=', 'C', 'Del', '%', 'bin', 'oct', 'hex', 'dec'):
-                button.config(bg="#ff6347", fg="white", bd=0.7, relief=tk.SOLID)  # Red background,white foreground,solid border
+                button.config(bg="#AA00AA", fg="black", bd=1.0, relief=tk.SOLID)  # Orchid purple background,white foreground,solid border
             elif text.isdigit() or text == '.':
-                button.config(bg="#4169e1", fg="white", bd=0.7, relief=tk.SOLID)  # Blue background,white foreground,solid border
+                button.config(bg="#4169e1", fg="black", bd=1.0, relief=tk.SOLID)  # Blue background,white foreground,solid border
             else:
-                button.config(bg="#20b2aa", fg="white", bd=0.7, relief=tk.SOLID)  # Green background,white foreground,solid border
+                button.config(bg="#99FFFF", fg="#000000", bd=1.0, relief=tk.SOLID)  # Teal background,white foreground,solid border
+
+            # Store original colors
+            button.bind("<Enter>", lambda event, b=button: self.on_hover_enter(b))
+            button.bind("<Leave>", lambda event, b=button: self.on_hover_leave(b))
+
+    def on_hover_enter(self, button):
+        # Store original colors
+        button.orig_bg = button.cget("bg")
+        button.orig_fg = button.cget("fg")
+
+        # Change colors on hover
+        button.config(bg="white", fg="black")
+
+    def on_hover_leave(self, button):
+        # Restore original colors
+        button.config(bg=button.orig_bg, fg=button.orig_fg)
 
     def on_button_click(self, text):
         if text == '=':
@@ -78,6 +108,8 @@ class ScientificCalculator(tk.Tk):
             except Exception as e:
                 self.display.delete("1.0", tk.END)
                 self.display.insert(tk.END, "Error")
+        elif text == 'π':  # Handle π button
+            self.display.insert(tk.END, math.pi)
         else:
             self.display.insert(tk.END, text)
 
@@ -88,22 +120,40 @@ class ScientificCalculator(tk.Tk):
         expression = expression.replace('tan', 'math.tan')
         expression = expression.replace('sqrt', 'math.sqrt')
         expression = expression.replace('^', '**')
+        expression = expression.replace('π', 'math.pi')
 
         # Evaluate the expression
-        result = eval(expression)
-        return result
+        try:
+            result = eval(expression)
+            return result
+        except Exception as e:
+            return "Error: " + str(e)
 
     def convert_expression(self, expression, base):
         expression = expression.strip()
         if base == 'bin':
-            return bin(int(expression))
+            try:
+                return bin(int(expression))
+            except ValueError as e:
+                return "Error: " + str(e)
         elif base == 'oct':
-            return oct(int(expression))
+            try:
+                return oct(int(expression))
+            except ValueError as e:
+                return "Error: " + str(e)
         elif base == 'hex':
-            return hex(int(expression))
+            try:
+                return hex(int(expression))
+            except ValueError as e:
+                return "Error: " + str(e)
         elif base == 'dec':
-            return int(expression, 16)
+            try:
+                return int(expression, 16)
+            except ValueError as e:
+                return "Error: " + str(e)
 
 if __name__ == "__main__":
     app = ScientificCalculator()
     app.mainloop()
+
+
